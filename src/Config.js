@@ -20,8 +20,8 @@ const GetUserId = () => {
 
   return null;
 };
-
-const Config = {
+//
+const Config =  {
   AxiosConfig: {
     headers: {
       authorization: `${GetAccessToken()}`,
