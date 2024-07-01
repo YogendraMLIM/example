@@ -1,4 +1,3 @@
-// change on 07/06/2024
 import React from 'react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -8,7 +7,8 @@ import {
   cilCalendarCheck, 
   cilSpeedometer,
   cilLocationPin,
-  cilGraph, 
+  cilPuzzle,
+  cilChartLine,
 } from '@coreui/icons'
 import { CNavItem } from '@coreui/react'
 
@@ -43,7 +43,6 @@ const _nav = [
     to: '/leave',
     icon: <CIcon icon={cilCalendarCheck} customClassName="nav-icon" />,
   },
-  //code change start
   {
     component: CNavItem,
     name: 'Official Duty / WFH',
@@ -54,9 +53,14 @@ const _nav = [
     component: CNavItem,
     name: 'Summary Report',
     to: '/report',
-    icon: <CIcon icon={cilGraph} customClassName="nav-icon" />,
+    icon: <CIcon icon={cilChartLine} customClassName="nav-icon" />,
   },
-    //code change end
+  {
+    component: CNavItem,
+    name: 'Troubleshoot',
+    to: '/troubleshoot',
+    icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+  },
 ]
 
 export default _nav
