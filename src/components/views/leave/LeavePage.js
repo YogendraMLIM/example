@@ -72,7 +72,8 @@ const LeavePage = () => {
   const [employeeID, setEmployeeID] = useState('');
   const [employeeOptions, setEmployeeOptions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  
+  let toastId = null;
+
   const fetchLeaveRequests = async (page) => {
     try {
       if ((user?.userType == 1 && empIdName == 'All Employees') || user?.userType == 2) {
@@ -97,7 +98,7 @@ const LeavePage = () => {
       console.error("error fetching pending requests");
     }
   };
- 
+
   useEffect(() => {
     fetchLeaveRequests(currentPage);
   }, [currentPage, empIdName, employeeID]);
@@ -172,15 +173,18 @@ const LeavePage = () => {
   const handleAdd = async () => {
     try {
       if (!startDate) {
-        toast.info("Please enter start date.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        Id = toastId = toast.info("Please enter start date.", { autoClose: 3000 });
         return;
       }
       if (!endDate) {
-        toast.info("Please enter end date.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter end date.", { autoClose: 3000 });
         return;
       }
       if (!reason) {
-        toast.info("Please enter reason.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter reason.", { autoClose: 3000 });
         return;
       }
       let firstHalf = 'No';
@@ -231,9 +235,11 @@ const LeavePage = () => {
       setEndDate('');
       setFirstHalfChecked(false);
       setSecondHalfChecked(false);
-      toast.success("Leave request submitted successfully.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Leave request submitted successfully.", { autoClose: 3000 });
     } catch (error) {
-      toast.error("Error in leave submission." + error, { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in leave submission." + error, { autoClose: 3000 });
     }
   };
 
@@ -299,7 +305,7 @@ const LeavePage = () => {
     });
     setLateRecord(response.data.data[0].DaysWithLateLogin);
   });
-  
+
   const handleRelaxationTimeChange = (async (event) => {
     setRelaxationTime(event.target.value);
     const response = await axios.get(`${Config.apiUrl}/latecount`, {
@@ -323,23 +329,28 @@ const LeavePage = () => {
   const handleLateAdd = async () => {
     try {
       if (!empName) {
-        toast.info("Please enter employee name.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter employee name.", { autoClose: 3000 });
         return;
       }
       if (!rangeStartDate) {
-        toast.info("Please enter range start date.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter range start date.", { autoClose: 3000 });
         return;
       }
       if (!rangeEndDate) {
-        toast.info("Please enter range end date.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter range end date.", { autoClose: 3000 });
         return;
       }
       if (!relaxationTime) {
-        toast.info("Please enter relaxation time.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter relaxation time.", { autoClose: 3000 });
         return;
       }
       if (!lateEnd) {
-        toast.info("Please enter late leave end date.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter late leave end date.", { autoClose: 3000 });
         return;
       }
       let halfDay = 'No';
@@ -378,9 +389,11 @@ const LeavePage = () => {
       setLateRecord('');
       setLateEnd('');
       setHalfDayChecked(false);
-      toast.success("Late leave added successfully.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Late leave added successfully.", { autoClose: 3000 });
     } catch (error) {
-      toast.error("Error in late leave submission." + error, { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in late leave submission." + error, { autoClose: 3000 });
     }
   };
 
@@ -398,7 +411,7 @@ const LeavePage = () => {
 
   //#endregion
 
-   //#region Approve Leave
+  //#region Approve Leave
 
   const handleApproveReasonChange = ((event) => {
     setApproveReason(event.target.value);
@@ -408,7 +421,6 @@ const LeavePage = () => {
 
     try {
       let params = {
-        "EmpID": user?.empid,
         "Id": selectedRequest.id,
         "Reason": approveReason,
       }
@@ -416,9 +428,11 @@ const LeavePage = () => {
       console.log(response.data);
       setShowApproveDialog(false);
       fetchLeaveRequests();
-      toast.success("Leave approved successfully.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Leave approved successfully.", { autoClose: 3000 });
     } catch {
-      toast.error("Error in approving leave.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in approving leave.", { autoClose: 3000 });
     }
   }
 
@@ -436,7 +450,8 @@ const LeavePage = () => {
 
   const handleReject = async () => {
     if (!rejectReason) {
-      toast.info("Please enter reason for rejection.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter reason for rejection.", { autoClose: 3000 });
       return;
     }
     try {
@@ -450,9 +465,11 @@ const LeavePage = () => {
       setShowRejectDialog(false);
       fetchLeaveRequests();
       setRejectReason('');
-      toast.success("Leave rejected successfully.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Leave rejected successfully.", { autoClose: 3000 });
     } catch {
-      toast.error("Error in rejecting leave.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in rejecting leave.", { autoClose: 3000 });
 
     }
   }
@@ -472,7 +489,8 @@ const LeavePage = () => {
 
   const handleCancel = async () => {
     if (!rejectReason) {
-      toast.info("Please enter reason for deleting leave request.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter reason for deleting leave request.", { autoClose: 3000 });
       return;
     }
     try {
@@ -486,9 +504,11 @@ const LeavePage = () => {
       handleModalCancel(false);
       fetchLeaveRequests();
       setRejectReason('');
-      toast.success("Leave request deleted successfully.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Leave request deleted successfully.", { autoClose: 3000 });
     } catch {
-      toast.error("Error in deleting leave request.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in deleting leave request.", { autoClose: 3000 });
 
     }
 
@@ -503,52 +523,59 @@ const LeavePage = () => {
 
   return (
     <>
-      <CRow>
-        <CCol xs={12}>
-          <CCard className="mb-4">
-            <CCardHeader style={{ display: 'flex' }}>
-              Leave
-              {user?.userType == 1 && (
-                  <CDropdown style={{ marginLeft: '10px' }}>
-                  <CDropdownToggle
-                    color="secondary" caret >
-                    {empIdName}
-                  </CDropdownToggle>
-                  <CDropdownMenu
-                    onClick={handleEmployeeChange} style={{ cursor: 'pointer', overflowY: 'scroll', maxHeight: '200px' }}>
-                    <CDropdownItem value="">All Employees</CDropdownItem>
-                    {employeeOptions}
-                  </CDropdownMenu>
-                </CDropdown>
-              )}
-              <div className="leave-status" style={{ position: 'absolute', right: '10px', top: '-3px' }}>
-                {user?.userType == 1 && (
-                  <CTooltip
-                    content="Add late leave"
-                    trigger={['hover']}
-                  >
-                    <CButton
-                      color="primary"
-                      type="button"
-                      className="reject-btn mb-2 mx-2"
-                      onClick={openLateModal}>
-                      Late Leave
-                    </CButton>
-                  </CTooltip>
-                )}
-                <CTooltip
-                  content="Apply leave"
-                  trigger={['hover']}
-                >
-                  <CButton
-                    color="primary"
-                    type="button"
-                    className="reject-btn mb-2 mx-2"
-                    onClick={openModal}>
-                    Leave Request
-                  </CButton>
-                </CTooltip>
-              </div>
+      <CRow xs={{ gutter: 3 }}>
+        <CCol>
+          <CCard style={{ marginBottom: '10px' }}>
+            <CCardHeader>
+              <CRow>
+                <CCol xs={12} sm={6} md={6} xl={6}>
+                  Leave
+                  {user?.userType == 1 && (
+                    <CDropdown style={{ marginLeft: '10px' }}>
+                      <CDropdownToggle
+                        color="secondary" caret >
+                        {empIdName}
+                      </CDropdownToggle>
+                      <CDropdownMenu
+                        onClick={handleEmployeeChange} style={{ cursor: 'pointer', overflowY: 'scroll', maxHeight: '200px' }}>
+                        <CDropdownItem value="">All Employees</CDropdownItem>
+                        {employeeOptions}
+                      </CDropdownMenu>
+                    </CDropdown>
+                  )}
+                </CCol>
+                <CCol xs={12} sm={6} md={6} xl={6}
+                style={{ display: 'flex', flexDirection: 'row-reverse' }}>
+                  <div className="leave-status">
+                    {user?.userType == 1 && (
+                      <CTooltip
+                        content="Add late leave"
+                        trigger={['hover']}
+                      >
+                        <CButton
+                          color="primary"
+                          type="button"
+                          className="reject-btn mb-2 mx-2"
+                          onClick={openLateModal}>
+                          Late Leave
+                        </CButton>
+                      </CTooltip>
+                    )}
+                    <CTooltip
+                      content="Apply leave"
+                      trigger={['hover']}
+                    >
+                      <CButton
+                        color="primary"
+                        type="button"
+                        className="reject-btn mb-2 mx-2"
+                        onClick={openModal}>
+                        Leave Request
+                      </CButton>
+                    </CTooltip>
+                  </div>
+                </CCol>
+              </CRow>
               <CModal visible={showLateDialog} onClose={handleLateCancel}>
                 <CModalHeader>
                   <CModalTitle>Late Leave</CModalTitle>
@@ -861,7 +888,7 @@ const LeavePage = () => {
                           </CTableDataCell>
                           <CTableDataCell className="text-nowrap">{request.fromDate}</CTableDataCell>
                           <CTableDataCell className="text-nowrap">{request.toDate}</CTableDataCell>
-                          <CTableDataCell>{request.Reason}</CTableDataCell>
+                          <CTableDataCell row="scope">{request.Reason}</CTableDataCell>
                           <CTableDataCell>{request.NoOfLeave}</CTableDataCell>
                           {request.FirstHalf == 0 && (
                             <>

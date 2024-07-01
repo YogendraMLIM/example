@@ -61,15 +61,14 @@ const Employee = () => {
   const [password, setPassword] = useState('');
   const [designation, setDesignation] = useState('');
   const [dob, setDOB] = useState('');
-
   const [editDesignation, setEditDesignation] = useState('');
   const [editEmployeeName, setEditEmployeeName] = useState('');
   const [editStatus, setEditStatus] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [editDob, setEditDOB] = useState('');
   const [editEmpUid, setEditEmpUid] = useState('');
-
   const [editRole, setEditRole] = useState('');
+  let toastId = null;
 
   const handleEditRoleChange = ((event) => {
     setEditRole(event.target.value);
@@ -169,32 +168,39 @@ const Employee = () => {
       console.log(response.data);
       setShowRejectDialog(false);
       fetchLeaveRequests();
-      toast.success("Employee role changed successfully.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Employee role changed successfully.", { autoClose: 3000 });
     } catch {
-      toast.error("Error in changing employee role.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in changing employee role.", { autoClose: 3000 });
     }
   }
 
 
   const handleEdit = async () => {
     if (!editDesignation) {
-      toast.info("Please enter designation.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter designation.", { autoClose: 3000 });
       return;
     }
     if (!editEmployeeName) {
-      toast.info("Please enter employee name.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter employee name.", { autoClose: 3000 });
       return;
     }
     if (!editStatus) {
-      toast.info("Please enter status.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter status.", { autoClose: 3000 });
       return;
     }
     if (!editPassword) {
-      toast.info("Please enter password.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter password.", { autoClose: 3000 });
       return;
     }
     if (!editDob) {
-      toast.info("Please enter dob.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter dob.", { autoClose: 3000 });
       return;
     }
     try {
@@ -211,15 +217,18 @@ const Employee = () => {
       console.log(response.data);
 
       if (response.data.status === 'NOK') {
-        toast.success(response.data.message, { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.success(response.data.message, { autoClose: 3000 });
       }
       else {
         setShowApproveDialog(false);
         fetchLeaveRequests();
-        toast.success(response.data.message, { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.success(response.data.message, { autoClose: 3000 });
       }
     } catch {
-      toast.error("Error in updating employee details", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in updating employee details", { autoClose: 3000 });
 
     }
 
@@ -233,30 +242,36 @@ const Employee = () => {
   const handleAdd = async () => {
     try {
       if (!employeeName) {
-        toast.info("Please enter employee name.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter employee name.", { autoClose: 3000 });
         return;
       }
       if (!employeeId) {
-        toast.info("Please enter employee id.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter employee id.", { autoClose: 3000 });
         return;
       }
       if (!userName) {
-        toast.info("Please enter userName.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter userName.", { autoClose: 3000 });
         return;
       }
 
       if (!password) {
-        toast.info("Please enter password.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter password.", { autoClose: 3000 });
         return;
       }
 
       if (!designation) {
-        toast.info("Please enter designation.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter designation.", { autoClose: 3000 });
         return;
       }
 
       if (!dob) {
-        toast.info("Please enter dob.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter dob.", { autoClose: 3000 });
         return;
       }
 
@@ -271,7 +286,8 @@ const Employee = () => {
       const response = await axios.post(`${Config.apiUrl}/addRegister`, params);
       console.log(response.data);
       if (response.data.status === 'NOK') {
-        toast.success(response.data.message, { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.success(response.data.message, { autoClose: 3000 });
       }
       else {
         setShowAddDialog(false);
@@ -282,11 +298,13 @@ const Employee = () => {
         setPassword('');
         setDesignation('');
         setDOB('');
-        toast.success(response.data.message, { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.success(response.data.message, { autoClose: 3000 });
       }
 
     } catch (error) {
-      toast.error("Error in leave submission." + error, { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in leave submission." + error, { autoClose: 3000 });
     }
   };
 
@@ -400,6 +418,7 @@ const Employee = () => {
                               <option value="Manager">Manager</option>
                               <option value="Programmer">Programmer</option>
                               <option value="Database Developer">Database Developer</option>
+                              <option value="Business Development">Business Development</option>
                             </CFormSelect>
                           </CCol>
                           <CCol xs>
@@ -608,7 +627,8 @@ const Employee = () => {
                                   <option value="Manager">Manager</option>
                                   <option value="Programmer">Programmer</option>
                                   <option value="Database Developer">Database Developer</option>
-                                </CFormSelect>
+                                  <option value="Business Development">Business Development</option>
+                                  </CFormSelect>
                               </CCol>
 
                               <CCol xs>

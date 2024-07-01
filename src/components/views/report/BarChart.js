@@ -1,10 +1,14 @@
 import React, { useEffect, useState, useContext } from 'react'
 import Config from "../../../Config";
 import { useSelector } from "react-redux";
-import { CChartBar } from '@coreui/react-chartjs'
+// import { CChartBar } from '@coreui/react-chartjs'
+import { Bar } from 'react-chartjs-2';
 import * as ExcelJS from 'exceljs';
 import axios from 'axios'
 import UserContext from '../../../context/UserContext'
+import { Chart as ChartJS, registerables } from 'chart.js';
+import 'chart.js/auto';
+ChartJS.register(...registerables);
 
 import {
     CCard,
@@ -63,9 +67,8 @@ const BarChart = () => {
                 {
                     barPercentage: 0.8,
                     label: 'Leaves Used',
-                    backgroundColor: ['rgba(90, 209, 255, 1)'],
-                    borderColor: 'rgba(6, 27, 94, 1)',
-                    borderWidth: 1,
+                    backgroundColor: ['rgba(255, 99, 132, 1)'],
+                    borderWidth: 0,
                     data: leavesUsed,
                 },
             ],
@@ -86,7 +89,7 @@ const BarChart = () => {
         const worksheet = workbook.addWorksheet(`Employee Leave - ${selectedMonthYear}`);
 
         // Set up the heading
-        const heading = 'Employee Leave Report';
+        const heading = `Employee Leave Report - ${selectedMonthYear}`;
         worksheet.addRow([heading]);
         worksheet.getCell('A1').value = heading;
         worksheet.getCell('A1').font = { bold: true };
@@ -127,6 +130,14 @@ const BarChart = () => {
                     };
                 });
             }
+
+            for (let i = 0; i < employeeNames.length; i++) {
+                if (leaveCounts[i] > 15) {
+                    worksheet.getCell(`D${i+3}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'ffda9694' } };   
+
+                }
+            }
+
         } else {
             worksheet.mergeCells('A1', 'C1');
             // Add column headers
@@ -154,6 +165,13 @@ const BarChart = () => {
                         right: { style: 'thin' }
                     };
                 });
+            }
+
+            for (let i = 0; i < employeeNames.length; i++) {
+                if (leaveCounts[i] > 0) {
+                    worksheet.getCell(`C${i+3}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'ffb7dee8' } };   
+
+                }
             }
         }
 
@@ -201,7 +219,7 @@ const BarChart = () => {
                         <CCardHeader>
                             <CRow>
                                 <CCol className='mb-1' xs={12} sm={6} md={6} xl={6}>
-                                    Employee Leave Count
+                                    Leave Summary
                                         <CDropdown style={{ marginLeft: '10px' }}>
                                             <CDropdownToggle
                                                 color="secondary" caret >
@@ -228,8 +246,8 @@ const BarChart = () => {
                                 </CCol>
                             </CRow>
                         </CCardHeader>
-                        <CCardBody style={{ maxHeight: '26rem' }}>
-                            <CChartBar
+                        <CCardBody>
+                            <Bar
                                 style={{ maxHeight: '25rem' }}
                                 data={chartData.data}
                                 options={chartData.options}

@@ -33,7 +33,7 @@ import {
   cilTrash,
 } from '@coreui/icons'
 import Config from "../../../Config";
-import './LeaveRequestPage.css'
+import './OfficialDuty.css'
 import axios from "axios";
 import { toast } from "react-toastify";
 import CIcon from "@coreui/icons-react";
@@ -45,7 +45,7 @@ const OfficialDuty = () => {
   const user = useSelector((state) => state.user);
   const { employeeNames } = useContext(UserContext);
   const [checkStatusPending, setCheckStatusPending] = useState('');
-  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [officialDuty, setOfficialDuty] = useState([]);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -62,17 +62,19 @@ const OfficialDuty = () => {
   const [employeeID, setEmployeeID] = useState('');
   const [employeeOptions, setEmployeeOptions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showPullback, setShowPullback] = useState(false);
+  let toastId = null;
 
-  const fetchLeaveRequests = async (page) => {
+  const fetchOfficialDutyRequests = async (page) => {
     try {
       if ((user?.userType == 1 && empIdName == 'All Employees') || user?.userType == 2) {
-        const response = await axios.get(`${Config.apiUrl}/pending`, {
+        const response = await axios.get(`${Config.apiUrl}/pendingOfficialDuty`, {
           params: {
             userType: user?.userType,
             empid: user?.empid
           }
         });
-        setLeaveRequests(response.data.data);
+        setOfficialDuty(response.data.data);
         const hasPendingRequest = response.data.data.some(request => request.Status === 'Pending');
         if (hasPendingRequest) {
           setCheckStatusPending('Pending');
@@ -80,8 +82,8 @@ const OfficialDuty = () => {
           setCheckStatusPending('');
         }
       } else {
-        const response = await axios.get(`${Config.apiUrl}/eachEmpLeaves?empid=${employeeID}`);
-        setLeaveRequests(response.data.data);
+        const response = await axios.get(`${Config.apiUrl}/eachEmpOfficialDuty?empid=${employeeID}`);
+        setOfficialDuty(response.data.data);
       }
     } catch (error) {
       console.error("error fetching pending requests");
@@ -89,7 +91,7 @@ const OfficialDuty = () => {
   };
 
   useEffect(() => {
-    fetchLeaveRequests(currentPage);
+    fetchOfficialDutyRequests(currentPage);
   }, [currentPage, empIdName, employeeID]);
 
   useEffect(() => {
@@ -120,18 +122,9 @@ const OfficialDuty = () => {
   const currentTableData = useMemo(() => {
     const firstPageIndex = (currentPage - 1) * PageSize;
     const lastPageIndex = firstPageIndex + PageSize;
-    return leaveRequests.slice(firstPageIndex, lastPageIndex);
-  }, [leaveRequests, currentPage]);
+    return officialDuty.slice(firstPageIndex, lastPageIndex);
+  }, [officialDuty, currentPage]);
 
-  const calculateDays = (start, end, count) => {
-    if (start && end) {
-      const startDt = new Date(start);
-      const endDt = new Date(end);
-      const diffTime = Math.abs(endDt - startDt);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays + count;
-    }
-  };
 
   //#region Add WFH OR OD 
 
@@ -147,7 +140,7 @@ const OfficialDuty = () => {
     setEndDate(event.target.value);
   });
 
-  const handleRadioChange = (event) => {
+  const handleModeChange = (event) => {
     setRadioChecked(event.target.id);
   };
 
@@ -159,8 +152,6 @@ const OfficialDuty = () => {
     setSecondHalfChecked(event.target.checked);
   };
 
-
-  
   const handleReasonChange = ((event) => {
     setReason(event.target.value);
   });
@@ -168,39 +159,24 @@ const OfficialDuty = () => {
   const handleAdd = async () => {
     try {
       if (!startDate) {
-        toast.info("Please enter start date.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter start date.", { autoClose: 3000 });
         return;
       }
       if (!endDate) {
-        toast.info("Please enter end date.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter end date.", { autoClose: 3000 });
         return;
       }
       if (!reason) {
-        toast.info("Please enter reason.", { autoClose: 3000 });
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please enter reason.", { autoClose: 3000 });
         return;
       }
-      let firstHalf = 'No';
-      let secondHalf = 'No';
-      let NoOfLeave = 0;
-      if (firstHalfChecked == true) {
-        firstHalf = 'Yes';
-        secondHalf = 'No';
-        NoOfLeave = calculateDays(startDate, endDate, .5);
-      }
-      else if (secondHalfChecked == true) {
-        secondHalf = 'Yes';
-        firstHalf = 'No';
-        NoOfLeave = calculateDays(startDate, endDate, .5);
-      }
-      else if (secondHalfChecked == true && firstHalfChecked == true) {
-        firstHalf = 'Yes';
-        secondHalf = 'Yes';
-        NoOfLeave = calculateDays(startDate, endDate, 0);
-      }
-      else {
-        firstHalf = 'No';
-        secondHalf = 'No';
-        NoOfLeave = calculateDays(startDate, endDate, 1);
+      if (!radioChecked) {
+        if (toastId) toast.dismiss(toastId);
+        toastId = toast.info("Please select mode.", { autoClose: 3000 });
+        return;
       }
 
       const params = {
@@ -209,59 +185,76 @@ const OfficialDuty = () => {
         "fromDate": startDate,
         "toDate": endDate,
         "reason": reason,
-        "firstHalf": firstHalf,
-        "secondHalf": secondHalf,
-        "NoOfLeave": NoOfLeave,
+        "firstHalf": firstHalfChecked,
+        "secondHalf": secondHalfChecked,
+        "Mode": radioChecked,
         "status": 'Pending',
         "remark": 'N/A',
       };
 
-
-      const response = await axios.post(`${Config.apiUrl}/addleave`, params);
+      const response = await axios.post(`${Config.apiUrl}/addOfficialDuty`, params);
       console.log(response.data);
       setShowAddDialog(false);
 
-      fetchLeaveRequests();
+      fetchOfficialDutyRequests();
       setReason('');
       setStartDate('');
       setEndDate('');
       setFirstHalfChecked(false);
       setSecondHalfChecked(false);
-      toast.success("Leave request submitted successfully.", { autoClose: 3000 });
+      setRadioChecked(false);
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Official Duty request submitted successfully.", { autoClose: 3000 });
     } catch (error) {
-      toast.error("Error in leave submission." + error, { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in Official Duty submission." + error, { autoClose: 3000 });
     }
   };
 
   const handleAddCancel = () => {
     setShowAddDialog(false);
     setFirstHalfChecked(false);
+    setRadioChecked(false);
     setSecondHalfChecked(false);
   };
 
   //#endregion
 
-  //#region Approve Leave
+  //#region Approve OD/WFH
 
   const handleApproveReasonChange = ((event) => {
     setApproveReason(event.target.value);
   });
 
   const handleApprove = async () => {
-
     try {
       let params = {
         "EmpID": user?.empid,
         "Id": selectedRequest.id,
         "Reason": approveReason,
       }
-      const response = await axios.put(`${Config.apiUrl}/approve`, params);
+      const response = await axios.put(`${Config.apiUrl}/updateApproveForOD`, params);
       console.log(response.data);
+      if (selectedRequest.Mode == 'work-from-home') {
+        let params = {
+          "Id": selectedRequest.id,
+        }
+        const record = await axios.post(`${Config.apiUrl}/insertWFHLogin`, params)
+        console.log(record.data);
+      } else if (selectedRequest.Mode == 'official-duty') {
+        let params = {
+          "Id": selectedRequest.id,
+        }
+        const record = await axios.post(`${Config.apiUrl}/insertODLogin`, params)
+        console.log(record.data);
+      }
       setShowApproveDialog(false);
-      fetchLeaveRequests();
-      toast.success("Leave approved successfully.", { autoClose: 3000 });
+      fetchOfficialDutyRequests();
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Request approved successfully.", { autoClose: 3000 });
     } catch {
-      toast.error("Error in approving leave.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in approving request.", { autoClose: 3000 });
     }
   }
 
@@ -272,30 +265,33 @@ const OfficialDuty = () => {
 
   //#endregion
 
-  //#region Reject Leave
+  //#region Reject OD/WFH
+
   const handleRejectReasonChange = ((event) => {
     setRejectReason(event.target.value);
   });
 
   const handleReject = async () => {
     if (!rejectReason) {
-      toast.info("Please enter reason for rejection.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter reason for rejection.", { autoClose: 3000 });
       return;
     }
     try {
       let params = {
-        "rejectedCancel": 'Rejected',
         "Id": selectedRequest.id,
         "rejectReason": rejectReason
       }
-      const response = await axios.put(`${Config.apiUrl}/reject`, params);
+      const response = await axios.put(`${Config.apiUrl}/updateRejectForOD`, params);
       console.log(response.data);
       setShowRejectDialog(false);
-      fetchLeaveRequests();
+      fetchOfficialDutyRequests();
       setRejectReason('');
-      toast.success("Leave rejected successfully.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("Request rejected successfully.", { autoClose: 3000 });
     } catch {
-      toast.error("Error in rejecting leave.", { autoClose: 3000 });
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in rejecting request.", { autoClose: 3000 });
 
     }
   }
@@ -305,40 +301,84 @@ const OfficialDuty = () => {
     setRejectReason('');
   }
   //#endregion
+
+  //#region Delete OD/WFH
+
+  const handleCancelReasonChange = ((event) => {
+    setRejectReason(event.target.value);
+  });
+
+  const handleCancel = async () => {
+    if (!rejectReason) {
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.info("Please enter reason for deleting the request.", { autoClose: 3000 });
+      return;
+    }
+    try {
+      let params = {
+        "Id": selectedRequest.id,
+        "rejectReason": rejectReason
+      }
+      const response = await axios.put(`${Config.apiUrl}/updatePullbackForOD`, params);
+      console.log(response.data);
+      handleModalCancel(false);
+      fetchOfficialDutyRequests();
+      setRejectReason('');
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.success("OD/WFH request deleted successfully.", { autoClose: 3000 });
+    } catch {
+      if (toastId) toast.dismiss(toastId);
+      toastId = toast.error("Error in deleting the request.", { autoClose: 3000 });
+
+    }
+  }
+
+  const handleModalCancel = () => {
+    setShowPullback(false);
+    setRejectReason('');
+  }
+  //#endregion
   return (
     <>
-      <CRow>
-        <CCol xs={12}>
-          <CCard className="mb-4">
-            <CCardHeader style={{ display: 'flex' }}>
-              Official Duty
-              {user?.userType == 1 && (
-                <CDropdown style={{ marginLeft: '10px' }}>
-                  <CDropdownToggle
-                    color="secondary" caret >
-                    {empIdName}
-                  </CDropdownToggle>
-                  <CDropdownMenu
-                    onClick={handleEmployeeChange} style={{ cursor: 'pointer', overflowY: 'scroll', maxHeight: '200px' }}>
-                    <CDropdownItem value="">All Employees</CDropdownItem>
-                    {employeeOptions}
-                  </CDropdownMenu>
-                </CDropdown>
-              )}
-              <div className="leave-status" style={{ position: 'absolute', right: '10px', top: '-3px' }}>
-                <CTooltip
-                  content="Apply for OD/WFH"
-                  trigger={['hover']}
-                >
-                  <CButton
-                    color="primary"
-                    type="button"
-                    className="reject-btn mb-2 mx-2"
-                    onClick={openModal}>
-                    OD / WFH
-                  </CButton>
-                </CTooltip>
-              </div>
+      <CRow  xs={{ gutter: 3 }}>
+        <CCol>
+          <CCard style={{ marginBottom: '10px' }}>
+            <CCardHeader>
+              <CRow>
+                <CCol xs={12} sm={6} md={6} xl={6}>
+                  Official Duty
+                  {user?.userType == 1 && (
+                    <CDropdown style={{ marginLeft: '10px' }}>
+                      <CDropdownToggle
+                        color="secondary" caret >
+                        {empIdName}
+                      </CDropdownToggle>
+                      <CDropdownMenu
+                        onClick={handleEmployeeChange} style={{ cursor: 'pointer', overflowY: 'scroll', maxHeight: '200px' }}>
+                        <CDropdownItem value="">All Employees</CDropdownItem>
+                        {employeeOptions}
+                      </CDropdownMenu>
+                    </CDropdown>
+                  )}
+                </CCol>
+                <CCol xs={12} sm={6} md={6} xl={6}
+                style={{ display: 'flex', flexDirection: 'row-reverse' }}>
+                  <div className="leave-status">
+                    <CTooltip
+                      content="Apply for OD/WFH"
+                      trigger={['hover']}
+                    >
+                      <CButton
+                        color="primary"
+                        type="button"
+                        className="reject-btn mb-2 mx-2"
+                        onClick={openModal}>
+                        OD / WFH
+                      </CButton>
+                    </CTooltip>
+                  </div>
+                </CCol>
+              </CRow>
               <CModal visible={showAddDialog} onClose={handleAddCancel}>
                 <CModalHeader>
                   <CModalTitle>Mark Official Duty / Work From Home</CModalTitle>
@@ -377,7 +417,7 @@ const OfficialDuty = () => {
                           id="official-duty"
                           label="Official Duty"
                           checked={radioChecked === 'official-duty'}
-                          onChange={handleRadioChange}
+                          onChange={handleModeChange}
                         />
                       </CCol>
                       <CCol xs style={{ marginBottom: '5px' }}>
@@ -387,7 +427,7 @@ const OfficialDuty = () => {
                           id="work-from-home"
                           label="Work From Home"
                           checked={radioChecked === 'work-from-home'}
-                          onChange={handleRadioChange}
+                          onChange={handleModeChange}
                         />
                       </CCol>
                     </CRow>
@@ -395,7 +435,7 @@ const OfficialDuty = () => {
                       <CCol xs style={{ marginBottom: '5px' }}>
                         <CFormLabel id="inputGroupPrepend03">Start Date</CFormLabel>
                         <CFormInput
-                          type="datetime-local"
+                          type="date"
                           id="StartDate"
                           name='StartDate'
                           onChange={handleStartDateChange}
@@ -406,7 +446,7 @@ const OfficialDuty = () => {
                       <CCol xs>
                         <CFormLabel id="inputGroupPrepend03">End Date</CFormLabel>
                         <CFormInput
-                          type="datetime-local"
+                          type="date"
                           placeholder="End Date"
                           onChange={handleEndDateChange}
                           min={startDate}
@@ -422,7 +462,7 @@ const OfficialDuty = () => {
                           inline
                           id="inlineCheckbox2"
                           value="Yes"
-                          label="Second Half"
+                          label="Evening"
                           checked={secondHalfChecked}
                           onChange={handleSecondHalfChange}
                         />
@@ -432,7 +472,7 @@ const OfficialDuty = () => {
                           inline
                           id="inlineCheckbox1"
                           value="Yes"
-                          label="First Half"
+                          label="Morning"
                           checked={firstHalfChecked}
                           onChange={handleFirstHalfChange}
                         />
@@ -482,10 +522,13 @@ const OfficialDuty = () => {
                           Mode
                         </CTableHeaderCell>
                         <CTableHeaderCell scope="col" className="bg-body-tertiary text-center">
-                          First Half
+                          Morning
                         </CTableHeaderCell>
                         <CTableHeaderCell scope="col" className="bg-body-tertiary text-center">
-                          Second Half
+                          Evening
+                        </CTableHeaderCell>
+                        <CTableHeaderCell scope="col" className="bg-body-tertiary text-center">
+                          Reason
                         </CTableHeaderCell>
                         <CTableHeaderCell scope="col" className="bg-body-tertiary text-center">
                           Status
@@ -521,8 +564,8 @@ const OfficialDuty = () => {
                           </CTableDataCell>
                           <CTableDataCell className="text-nowrap">{request.fromDate}</CTableDataCell>
                           <CTableDataCell className="text-nowrap">{request.toDate}</CTableDataCell>
-                          <CTableDataCell>{request.Reason}</CTableDataCell>
-                          <CTableDataCell>{request.NoOfLeave}</CTableDataCell>
+                          <CTableDataCell>{request.Mode}</CTableDataCell>
+
                           {request.FirstHalf == 0 && (
                             <>
                               <CTableDataCell>No</CTableDataCell>
@@ -544,7 +587,7 @@ const OfficialDuty = () => {
                               <CTableDataCell>Yes</CTableDataCell>
                             </>
                           )}
-
+                          <CTableDataCell>{request.Reason}</CTableDataCell>
                           {request.Status == 'Pending' && (
                             <>
                               <CTableDataCell>
@@ -643,7 +686,7 @@ const OfficialDuty = () => {
                                       <CModalBody>
                                         <div className="mb-3">
                                           <CFormLabel htmlFor="exampleFormControlTextarea1">
-                                            Do you want to approve the leave?                                              </CFormLabel>
+                                            Do you want to approve the OD/WFH?                                              </CFormLabel>
                                           <CFormTextarea
                                             id="exampleFormControlTextarea1"
                                             rows={3}
@@ -717,9 +760,7 @@ const OfficialDuty = () => {
                               )}
                             </>
                           )}
-
                           <CTableDataCell>{request.RejectReason}</CTableDataCell>
-
                           {user?.userType == 2 && (
                             <>
                               {request.Status == 'Pending' && (
@@ -743,6 +784,32 @@ const OfficialDuty = () => {
                                       </CCol>
                                     </CRow>
 
+                                    <CModal visible={showPullback} onClose={() => setShowPullback(false)}>
+                                      <CModalHeader>
+                                        <CModalTitle> Pullback </CModalTitle>
+                                      </CModalHeader>
+                                      <CModalBody>
+                                        <CForm>
+                                          <div className="mb-3">
+                                            <CFormLabel htmlFor="exampleFormControlTextarea1">
+                                              Do you want to delete the request?                                              </CFormLabel>
+                                            <CFormTextarea
+                                              id="exampleFormControlTextarea1"
+                                              rows={3}
+                                              placeholder="Reason for Cancel"
+                                              name="cancel"
+                                              onChange={handleCancelReasonChange}
+                                            ></CFormTextarea>
+                                          </div>
+                                        </CForm>
+                                      </CModalBody>
+                                      <CModalFooter>
+                                        <CButton color="secondary" onClick={() => setShowPullback(false)}>
+                                          No
+                                        </CButton>
+                                        <CButton color="primary" onClick={handleCancel}>Yes</CButton>
+                                      </CModalFooter>
+                                    </CModal>
 
                                   </CTableDataCell>
                                 </>
@@ -777,7 +844,7 @@ const OfficialDuty = () => {
                   <Pagination
                     className="pagination-bar"
                     currentPage={currentPage}
-                    totalCount={leaveRequests.length}
+                    totalCount={officialDuty.length}
                     pageSize={PageSize}
                     onPageChange={page => setCurrentPage(page)}
                   />
