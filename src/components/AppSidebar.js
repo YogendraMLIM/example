@@ -32,7 +32,12 @@ const AppSidebar = () => {
   const { employeeNames, setEmployeeNames } = useContext(UserContext);
   const currentDate = new Date();
   const year = currentDate.getFullYear();
+  const [sidebarTooltip, setSidebarTooltip] = useState('Collapse Sidebar');
 
+  const sidebarToggle = () => {
+    dispatch({ type: 'set', sidebarUnfoldable: !unfoldable });
+    setSidebarTooltip(unfoldable == true ? 'Collapse Sidebar' : 'Expand Sidebar')
+  }
 
   useEffect(() => {
     console.log(sidebarShow);
@@ -99,9 +104,10 @@ const AppSidebar = () => {
               <CCol>
                 <img src={logo} alt='Logo'
                   style={{
+                    marginInlineStart: '8px', 
                     backgroundColor: 'white',
                     padding: '5px', borderRadius: '5px',
-                    width: '40px', height: '40px'
+                    width: '35px', height: '35px'
                   }} />
               </CCol>
               <CCol>
@@ -110,7 +116,7 @@ const AppSidebar = () => {
                     style={{
                       backgroundColor: 'white',
                       padding: '5px', borderRadius: '5px',
-                      width: '150px', height: '40px'
+                      width: '125px', height: '35px'
                     }} />
                 )}
 
@@ -126,11 +132,11 @@ const AppSidebar = () => {
         <AppSidebarNav items={navigation} />
         <CSidebarFooter className="border-top d-none d-lg-flex">
           <CTooltip
-            content="Collapse sidebar"
+            content={sidebarTooltip}
             trigger={['hover']}
           >
             <CSidebarToggler
-              onClick={() => dispatch({ type: 'set', sidebarUnfoldable: !unfoldable })}
+              onClick={sidebarToggle}
             />
           </CTooltip>
         </CSidebarFooter>

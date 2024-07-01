@@ -30,7 +30,6 @@ import {
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import {
-  cilContrast,
   cilAccountLogout,
   cilPowerStandby,
   cilUser,
@@ -43,19 +42,24 @@ import axios from 'axios'
 import { Remove_User } from "./actions";
 import { toast } from "react-toastify";
 import Config from "../Config";
-//mlinfomap
+
 const AppHeader = () => {
   const user = useSelector((state) => state.user);
   const headerRef = useRef();
   const dispatch = useDispatch();
   const logout = () => dispatch(Remove_User());
   const { colorMode, setColorMode } = useColorModes('coreui-free-react-admin-template-theme');
-  const [fullname, setFullname] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [menuTooltip, setMenuTooltip] = useState('Hide Menu');
 
   const sidebarShow = useSelector((state) => state.sidebarShow);
+
+  const menuToggle = () => {
+    dispatch({ type: 'set', sidebarShow: !sidebarShow })
+    setMenuTooltip(sidebarShow == false ? 'Hide Menu' : 'Show Menu')
+  }
 
   useEffect(() => {
     document.addEventListener('scroll', () => {
@@ -63,19 +67,6 @@ const AppHeader = () => {
         headerRef.current.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
     });
   }, []);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get(`${Config.apiUrl}/name?empid=${user?.empid}`);
-        setFullname(response.data.data);
-      } catch (error) {
-        console.error('Error checking all absent', error);
-        return false;
-      }
-    };
-    fetchUser();
-  }, [user?.empid]);
 
   const openModal = () => {
     setShowPasswordDialog(true);
@@ -97,6 +88,10 @@ const AppHeader = () => {
 
   const handlePasswordChange = async () => {
     try {
+      if (!newPassword || !confirmPassword) {
+        toast.error("Password fields cannot be empty.", { autoClose: 3000 });
+        return;
+      }
       if (newPassword === confirmPassword) {
         let params = {
           "EmpID": user?.empid,
@@ -122,11 +117,11 @@ const AppHeader = () => {
     <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
       <CContainer className="border-bottom px-4" fluid>
         <CTooltip
-          content="Menu"
+          content={menuTooltip}
           trigger={['hover']}
         >
           <CHeaderToggler
-            onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
+            onClick={menuToggle}
             style={{ marginInlineStart: '-14px' }}
           >
             <CIcon icon={cilMenu} size="lg" />
@@ -140,16 +135,10 @@ const AppHeader = () => {
           </CNavItem>
         </CHeaderNav>
         <CHeaderNav>
-          <CTooltip
-            content="Mode"
-            trigger={['hover']}
-          >
             <CDropdown variant="nav-item" placement="bottom-end">
               <CDropdownToggle caret={false}>
                 {colorMode === 'dark' ? (
                   <CIcon icon={cilMoon} size="lg" />
-                ) : colorMode === 'auto' ? (
-                  <CIcon icon={cilContrast} size="lg" />
                 ) : (
                   <CIcon icon={cilSun} size="lg" />
                 )}
@@ -173,18 +162,8 @@ const AppHeader = () => {
                 >
                   <CIcon className="me-2" icon={cilMoon} size="lg" /> Dark
                 </CDropdownItem>
-                <CDropdownItem
-                  active={colorMode === 'auto'}
-                  className="d-flex align-items-center"
-                  as="button"
-                  type="button"
-                  onClick={() => setColorMode('auto')}
-                >
-                  <CIcon className="me-2" icon={cilContrast} size="lg" /> Auto
-                </CDropdownItem>
               </CDropdownMenu>
             </CDropdown>
-          </CTooltip>
           <CTooltip
             content="Logout"
             trigger={['hover']}
@@ -256,7 +235,7 @@ const AppHeader = () => {
         </CHeaderNav>
       </CContainer>
       <CContainer className="px-4" fluid>
-        <CHeaderNav className="d-md-down-none" style={{ fontWeight: 'bold' }}>Hello, {fullname}</CHeaderNav>
+        <CHeaderNav className="d-md-down-none" style={{ fontWeight: 'bold' }}>Hello, {user?.name}</CHeaderNav>
       </CContainer>
     </CHeader>
   );

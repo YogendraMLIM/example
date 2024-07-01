@@ -68,6 +68,7 @@ export const AppSidebarNav = ({ items }) => {
             //code change start
             item.name !== 'Employee Data' && 
             item.name !== 'Employee Attendance' && 
+            item.name !== 'Troubleshoot' && 
             item.name !== 'Summary Report' ? navItem(item, index) : null
             //code change end
           ))
