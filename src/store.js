@@ -1,4 +1,3 @@
-// change on 07/06/2024
 import { legacy_createStore as createStore } from 'redux'
 import moment from "moment";
 const getUser = () => {
@@ -28,7 +27,7 @@ const getUser = () => {
     user: getUser(),
     sidebarShow: true,
     theme: 'light',
-    sidebarUnfoldable:false //code change
+    sidebarUnfoldable:false
   };
    
 
@@ -47,7 +46,7 @@ const changeState = (state = initialState, { type, ...rest }) => {
                 user: null,
             };
             sessionStorage.removeItem("user");
-            window.location.href = "/hrms-mlinfomap";
+            window.location.href = "/hrms";
             return removeUserState;
 
         case "set":
